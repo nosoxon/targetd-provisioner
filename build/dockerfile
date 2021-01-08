@@ -1,0 +1,13 @@
+FROM golang:alpine AS builder
+
+WORKDIR $GOPATH/src/thrymgjol.io
+COPY . ./
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo \
+    -ldflags "-s -w" \
+    -o /targetd-provisioner ./cmd/targetd-provisioner
+
+FROM scratch
+COPY --from=builder /targetd-provisioner /targetd-provisioner
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+
+CMD ["/targetd-provisioner"]
